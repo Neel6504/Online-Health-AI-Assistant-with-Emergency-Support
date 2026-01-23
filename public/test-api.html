@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>Test Flask API</h1>
+    <button onclick="testHealth()">Test Health</button>
+    <button onclick="testSymptoms()">Test Symptoms</button>
+    <button onclick="testPredict()">Test Predict</button>
+    <pre id="output"></pre>
+
+    <script>
+        const API_URL = 'http://localhost:5000';
+        const output = document.getElementById('output');
+
+        async function testHealth() {
+            try {
+                const response = await fetch(`${API_URL}/health`);
+                const data = await response.json();
+                output.textContent = 'Health: ' + JSON.stringify(data, null, 2);
+            } catch (error) {
+                output.textContent = 'Health Error: ' + error.message;
+            }
+        }
+
+        async function testSymptoms() {
+            try {
+                const response = await fetch(`${API_URL}/symptoms`);
+                const data = await response.json();
+                output.textContent = 'Symptoms: ' + JSON.stringify(data, null, 2);
+            } catch (error) {
+                output.textContent = 'Symptoms Error: ' + error.message;
+            }
+        }
+
+        async function testPredict() {
+            try {
+                const response = await fetch(`${API_URL}/predict`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        symptoms: { fever: true, cough: true, fatigue: true }
+                    })
+                });
+                const data = await response.json();
+                output.textContent = 'Predict: ' + JSON.stringify(data, null, 2);
+            } catch (error) {
+                output.textContent = 'Predict Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
