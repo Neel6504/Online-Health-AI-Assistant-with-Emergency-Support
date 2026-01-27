@@ -18,19 +18,10 @@ label_encoder_path = os.path.join(os.path.dirname(__file__), '..', 'label_encode
 with open(label_encoder_path, 'rb') as file:
     label_encoder = pickle.load(file)
 
-# Load symptoms from optimized list
-symptoms_file = os.path.join(os.path.dirname(__file__), 'symptoms.txt')
-if os.path.exists(symptoms_file):
-    with open(symptoms_file, 'r') as f:
-        SYMPTOMS = [line.strip() for line in f.readlines()]
-    print(f"Loaded {len(SYMPTOMS)} optimized symptoms from symptoms.txt")
-else:
-    # Fallback: Load from dataset
-    dataset_path = os.path.join(os.path.dirname(__file__), 'Disease and symptoms dataset.csv')
-    df = pd.read_csv(dataset_path, nrows=1)
-    SYMPTOMS = df.columns.tolist()[1:]
-    print(f"Loaded {len(SYMPTOMS)} symptoms from dataset (fallback)")
-
+# Load symptoms from dataset to match model features
+dataset_path = os.path.join(os.path.dirname(__file__), 'Disease and symptoms dataset.csv')
+df = pd.read_csv(dataset_path, nrows=1)
+SYMPTOMS = df.columns.tolist()[1:]  # All 377 symptoms
 print(f"Loaded {len(SYMPTOMS)} symptoms from dataset")
 print(f"Model expects {model.n_features_in_} features")
 print(f"Label encoder has {len(label_encoder.classes_)} disease classes")
