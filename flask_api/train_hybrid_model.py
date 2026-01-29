@@ -132,9 +132,8 @@ print(f"   ✓ Improvement over XGBoost: +{(ensemble_accuracy - xgb_accuracy)*10
 # ============================================================================
 print("\n[6/8] Simulating sparse symptom scenarios (2-5 symptoms)...")
 
-def simulate_sparse_symptoms(X, n_symptoms_range=(2, 5)):
+def simulate_sparse_symptoms(X, y_true, n_symptoms_range=(2, 5)):
     """Simulate user providing only 2-5 symptoms"""
-    X_sparse = X.copy()
     sparse_accuracies = []
     
     for _ in range(100):  # 100 random samples
@@ -143,22 +142,23 @@ def simulate_sparse_symptoms(X, n_symptoms_range=(2, 5)):
         
         # Keep only n_symptoms random symptoms, zero out the rest
         active_symptoms = np.where(sample == 1)[0]
-        if len(active_symptoms) > 0:
-            n_keep = np.random.randint(n_symptoms_range[0], min(n_symptoms_range[1]+1, len(active_symptoms)+1))
+        if len(active_symptoms) >= n_symptoms_range[0]:
+            n_keep = min(np.random.randint(n_symptoms_range[0], n_symptoms_range[1]+1), len(active_symptoms))
             keep_indices = np.random.choice(active_symptoms, n_keep, replace=False)
             
             sample[:] = 0
             sample.iloc[keep_indices] = 1
-        
-        # Predict with ensemble
-        sample_proba = 0.7 * xgb_model.predict_proba([sample])[0] + 0.3 * knn_model.predict_proba([sample])[0]
-        pred = np.argmax(sample_proba)
-        
-        sparse_accuracies.append(pred == y_test.iloc[idx])
+            
+            # Predict with ensemble
+            sample_proba = 0.7 * xgb_model.predict_proba([sample])[0] + 0.3 * knn_model.predict_proba([sample])[0]
+            pred = np.argmax(sample_proba)
+            
+            true_label = y_true[idx] if isinstance(y_true, np.ndarray) else y_true.iloc[idx]
+            sparse_accuracies.append(pred == true_label)
     
-    return np.mean(sparse_accuracies)
+    return np.mean(sparse_accuracies) if sparse_accuracies else 0.0
 
-sparse_accuracy = simulate_sparse_symptoms(X_test_selected)
+sparse_accuracy = simulate_sparse_symptoms(X_test_selected, y_test)
 print(f"   ✓ Sparse Symptoms (2-5) Accuracy: {sparse_accuracy*100:.2f}%")
 
 # ============================================================================
@@ -192,7 +192,7 @@ print("\n[8/8] Testing sample predictions...")
 for i in range(5):
     idx = np.random.randint(0, len(X_test_selected))
     sample = X_test_selected.iloc[idx:idx+1]
-    true_label = label_encoder.inverse_transform([y_test.iloc[idx]])[0]
+    true_label = label_encoder.inverse_transform([y_test[idx]])[0]
     
     # Ensemble prediction
     xgb_prob = xgb_model.predict_proba(sample)[0]
